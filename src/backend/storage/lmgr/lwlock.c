@@ -989,7 +989,6 @@ LWLockWakeup(LWLock *lock)
 		 * proclist_delete(), rather than having to check if it has been
 		 * removed from the list.
 		 */
-		Assert(waiter->lwWaiting == LW_WS_WAITING);
 		waiter->lwWaiting = LW_WS_PENDING_WAKEUP;
 
 		/*
@@ -1772,8 +1771,6 @@ LWLockUpdateVar(LWLock *lock, uint64 *valptr, uint64 val)
 		proclist_delete(&lock->waiters, iter.cur, lwWaitLink);
 		proclist_push_tail(&wakeup, iter.cur, lwWaitLink);
 
-		/* see LWLockWakeup() */
-		Assert(waiter->lwWaiting == LW_WS_WAITING);
 		waiter->lwWaiting = LW_WS_PENDING_WAKEUP;
 	}
 
