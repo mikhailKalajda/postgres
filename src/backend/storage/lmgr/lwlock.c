@@ -1417,9 +1417,12 @@ LWLockConditionalAcquire(LWLock *lock, LWLockMode mode)
  * backends as a side-effect.  Those other backends need to wait until the
  * flush finishes, but don't need to acquire the lock anymore.  They can just
  * wake up, observe that their records have already been flushed, and return.
+ *
+ * As this is not used to *wait* for lwlock acquisition, the caller has to
+ * provide a wait event to be reported.
  */
 bool
-LWLockAcquireOrWait(LWLock *lock, LWLockMode mode)
+LWLockAcquireOrWait(LWLock *lock, LWLockMode mode, uint32 wait_event_info)
 {
 	PGPROC	   *proc = MyProc;
 	bool		mustwait;
@@ -1469,7 +1472,7 @@ LWLockAcquireOrWait(LWLock *lock, LWLockMode mode)
 			lwstats->block_count++;
 #endif
 
-			LWLockReportWaitStart(lock);
+			pgstat_report_wait_start(wait_event_info);
 			if (TRACE_POSTGRESQL_LWLOCK_WAIT_START_ENABLED())
 				TRACE_POSTGRESQL_LWLOCK_WAIT_START(T_NAME(lock), mode);
 
@@ -1491,7 +1494,7 @@ LWLockAcquireOrWait(LWLock *lock, LWLockMode mode)
 #endif
 			if (TRACE_POSTGRESQL_LWLOCK_WAIT_DONE_ENABLED())
 				TRACE_POSTGRESQL_LWLOCK_WAIT_DONE(T_NAME(lock), mode);
-			LWLockReportWaitEnd();
+			pgstat_report_wait_end();
 
 			LOG_LWDEBUG("LWLockAcquireOrWait", lock, "awakened");
 		}
@@ -1604,9 +1607,13 @@ LWLockConflictsWithVar(LWLock *lock,
  *
  * Note: this function ignores shared lock holders; if the lock is held
  * in shared mode, returns 'true'.
+ *
+ * As this is not used to wait for lwlocks themselves, the caller has to
+ * provide a wait event to be reported.
  */
 bool
-LWLockWaitForVar(LWLock *lock, uint64 *valptr, uint64 oldval, uint64 *newval)
+LWLockWaitForVar(LWLock *lock, uint64 *valptr, uint64 oldval, uint64 *newval,
+				 uint32 wait_event_info)
 {
 	PGPROC	   *proc = MyProc;
 	int			extraWaits = 0;
@@ -1685,7 +1692,7 @@ LWLockWaitForVar(LWLock *lock, uint64 *valptr, uint64 oldval, uint64 *newval)
 		lwstats->block_count++;
 #endif
 
-		LWLockReportWaitStart(lock);
+		pgstat_report_wait_start(wait_event_info);
 		if (TRACE_POSTGRESQL_LWLOCK_WAIT_START_ENABLED())
 			TRACE_POSTGRESQL_LWLOCK_WAIT_START(T_NAME(lock), LW_EXCLUSIVE);
 
@@ -1708,7 +1715,7 @@ LWLockWaitForVar(LWLock *lock, uint64 *valptr, uint64 oldval, uint64 *newval)
 
 		if (TRACE_POSTGRESQL_LWLOCK_WAIT_DONE_ENABLED())
 			TRACE_POSTGRESQL_LWLOCK_WAIT_DONE(T_NAME(lock), LW_EXCLUSIVE);
-		LWLockReportWaitEnd();
+		pgstat_report_wait_end();
 
 		LOG_LWDEBUG("LWLockWaitForVar", lock, "awakened");
 
