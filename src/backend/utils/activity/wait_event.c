@@ -469,6 +469,12 @@ pgstat_get_wait_ipc(WaitEventIPC w)
 		case WAIT_EVENT_XACT_GROUP_UPDATE:
 			event_name = "XactGroupUpdate";
 			break;
+		case WAIT_EVENT_WAL_WAIT_INSERT:
+			event_name = "WALWaitInsert";
+			break;
+		case WAIT_EVENT_WAL_WAIT_WRITE:
+			event_name = "WALWaitWrite";
+			break;
 			/* no default case, so that compiler will warn */
 	}
 
