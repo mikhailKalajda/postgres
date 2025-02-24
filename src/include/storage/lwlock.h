@@ -39,8 +39,8 @@ typedef enum LWLockWaitState
  */
 typedef struct LWLock
 {
-	uint16		tranche;		/* tranche ID */
 	pg_atomic_uint64 state;		/* state of exclusive/nonexclusive lockers */
+	uint16		tranche;		/* tranche ID */
 #ifdef LOCK_DEBUG
 	pg_atomic_uint32 nwaiters;	/* number of waiters */
 	struct PGPROC *owner;		/* last exclusive owner of the lock */
